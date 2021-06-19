@@ -723,7 +723,7 @@
         getInfoData(id) {
           let that = this;
           axiosPostRequst(
-            "http://mgapp.appearoo.top/api.php/provide/vod_detail",
+            "https://mgapp.appearoo.top/api.php/provide/vod_detail",
             {
               ac: "vod_detail",
               id,
@@ -746,7 +746,7 @@
             vant.Toast("请输入手机号");
             return
           }
-          axiosPostRequst("http://mgapp.appearoo.top/api.php/provide/regcode", {
+          axiosPostRequst("https://mgapp.appearoo.top/api.php/provide/regcode", {
             user_name: this.user_name,
           }).then((res) => {
             if (res.code === 1) {
@@ -770,7 +770,7 @@
             return
           }
           
-          axiosPostRequst("http://mgapp.appearoo.top/api.php/provide/reg", {
+          axiosPostRequst("https://mgapp.appearoo.top/api.php/provide/reg", {
             user_name: this.user_name,
             user_pwd: md5(this.user_pwd),
             code: this.code,
@@ -779,7 +779,7 @@
           });
         },
         getDownloadUrlHandler(sys) {
-          axiosPostRequst("http://mgapp.appearoo.top/api.php/provide/upgrade", {
+          axiosPostRequst("https://mgapp.appearoo.top/api.php/provide/upgrade", {
             sys,
           }).then((res) => {
             const down_url = res.data.down_url
