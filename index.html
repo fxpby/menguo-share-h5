@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=0"
+    />
+    <meta name="referrer" content="no-referrer" />
+    <title>萌果视频</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/vant@2.12/lib/index.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6/dist/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vant@2.12/lib/vant.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <!-- <script src="https://unpkg.com/vconsole/dist/vconsole.min.js"></script> -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/blueimp-md5/2.18.0/js/md5.min.js"></script>
+    <script>
+      //designWidth:设计稿的实际宽度值，需要根据实际设置
+      //maxWidth:制作稿的最大宽度值，需要根据实际设置
+      //这段js的最后面有两个参数记得要设置，一个为设计稿实际宽度，一个为制作稿最大宽度，例如设计稿为750，最大宽度为750，则为(750,750)
+      (function (designWidth, maxWidth) {
+        var doc = document,
+          win = window,
+          docEl = doc.documentElement,
+          remStyle = document.createElement("style"),
+          tid;
+        //浏览器竖屏与横屏转换的BUG。
+        function refreshRem() {
+          var width = docEl.getBoundingClientRect().width;
+          maxWidth = maxWidth || 540;
+          width > maxWidth && (width = maxWidth);
+          var rem = (width * 100) / designWidth;
+          remStyle.innerHTML = "html{font-size:" + rem + "px;}";
+        }
+
+        if (docEl.firstElementChild) {
+          docEl.firstElementChild.appendChild(remStyle);
+        } else {
+          var wrap = doc.createElement("div");
+          wrap.appendChild(remStyle);
+          doc.write(wrap.innerHTML);
+          wrap = null;
+        }
+        //要等 wiewport 设置好后才能执行 refreshRem，不然 refreshRem 会执行2次；
+        refreshRem();
+
+        win.addEventListener(
+          "resize",
+          function () {
+            clearTimeout(tid); //防止执行两次
+            tid = setTimeout(refreshRem, 300);
+          },
+          false
+        );
+
+        win.addEventListener(
+          "pageshow",
+          function (e) {
+            if (e.persisted) {
+              // 浏览器后退的时候重新计算
+              clearTimeout(tid);
+              tid = setTimeout(refreshRem, 300);
+            }
+          },
+          false
+        );
+
+        if (doc.readyState === "complete") {
+          doc.body.style.fontSize = "16px";
+        } else {
+          doc.addEventListener(
+            "DOMContentLoaded",
+            function (e) {
+              doc.body.style.fontSize = "16px";
+            },
+            false
+          );
+        }
+      })(750, 750);
+    </script>
+    <style>
+      *,
+      *:before,
+      *:after {
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        box-sizing: border-box;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        visibility: hidden;
+        background-color: #ffffff;
+      }
+
+      .page-wrapper {
+        display: flex;
+        flex-direction: column;
+        margin: 0 0.27rem;
+      }
+
+      .page-wrapper .header {
+        padding: 0.45rem 0 0.53rem 0;
+        width: 100%;
+        font-size: 0.3rem;
+        color: #fff;
+        text-align: center;
+      }
+
+      .page-wrapper .main {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .page-wrapper .main .main-left {
+        width: 1.84rem;
+        height: 2.55rem;
+        background: #1e324b;
+        border-radius: 0.05rem;
+      }
+
+      .page-wrapper .main .main-left img {
+        width: 1.84rem;
+        height: 2.55rem;
+        border-radius: 0.05rem;
+        box-shadow: 0rem 0.06rem 0.3rem 0.02px rgba(0, 0, 0, 0.5);
+      }
+
+      .page-wrapper .main .main-right {
+        width: 4.86rem;
+      }
+
+      .page-wrapper .main .main-right .title {
+        height: 0.39rem;
+        font-size: 0.4rem;
+        font-family: PingFang SC;
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .page-wrapper .main .main-right .words {
+        height: 0.2rem;
+        margin-top: 0.2rem;
+        font-size: 0.2rem;
+        font-family: PingFang SC;
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .page-wrapper .main .main-right .director,
+      .page-wrapper .main .main-right .actor {
+        height: 0.19rem;
+        color: #bfbfbf;
+        font-size: 0.2rem;
+      }
+
+      .page-wrapper .main .main-right .director {
+        margin-top: 0.27rem;
+        margin-bottom: 0.08rem;
+      }
+
+      .page-wrapper .main .main-right .download-wrapper {
+        margin-top: 0.36rem;
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .page-wrapper .main .main-right .download-wrapper .download-btn {
+        padding: 0.17rem 0.28rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 2.3rem;
+        height: 0.65rem;
+        background: #ffffff;
+        border-radius: 0.05rem;
+      }
+
+      .page-wrapper .main .main-right .download-wrapper .android img,
+      .page-wrapper .main .main-right .download-wrapper .ios img {
+        width: 0.32rem;
+        height: 0.36rem;
+      }
+
+      .page-wrapper .main .main-right .download-wrapper .android div,
+      .page-wrapper .main .main-right .download-wrapper .ios div {
+        font-size: 0.3rem;
+        font-family: PingFang SC;
+        font-weight: bold;
+        color: #000000;
+      }
+
+      .page-wrapper .store-wrpper {
+        display: flex;
+        flex-direction: column;
+        padding: 0 0.2rem;
+        margin-top: 0.4rem;
+        width: 100%;
+        height: 2.27rem;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 0.1rem;
+      }
+
+      .page-wrapper .store-wrpper .title {
+        margin-top: 0.16rem;
+        margin-left: 0.05rem;
+        color: #ffffff;
+        height: 0.19rem;
+        font-size: 0.2rem;
+        font-family: PingFang SC;
+        font-weight: bold;
+      }
+
+      .page-wrapper .store-wrpper .store-main {
+        margin-top: 0.18rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .page-wrapper .store-wrpper .store-main .main-left {
+        margin-right: 0.16rem;
+        width: 1.1rem;
+      }
+
+      .page-wrapper .store-wrpper .store-main .main-left .store-number {
+        text-align: center;
+        height: 0.41rem;
+        font-size: 0.55rem;
+        font-family: PingFang SC;
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .page-wrapper .store-wrpper .store-main .main-left .store-star {
+        margin-top: 0.26rem;
+      }
+
+      .page-wrapper .store-wrpper .store-main .main-right {
+        width: 4.02rem;
+      }
+
+      .page-wrapper .store-wrpper .rate-line {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .page-wrapper .store-wrpper .rate-line .line-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .page-wrapper .store-wrpper .rate-line .line-right {
+        width: 3.3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .page-wrapper .store-wrpper .star-line {
+        margin-right: 0.2rem;
+        height: 0.2rem;
+        text-align: right;
+        display: flex;
+        flex-direction: row-reverse;
+      }
+
+      .page-wrapper .store-wrpper .line-store {
+        /* margin-top: 0.09rem; */
+        height: 0.2rem;
+      }
+
+      .page-wrapper .store-wrpper .breakline {
+        margin-top: 0.16rem;
+        width: 100%;
+        height: 0.01rem;
+        background: #ffffff;
+        opacity: 0.1;
+      }
+
+      .page-wrapper .store-wrpper .other-info {
+        margin-top: 0.04rem;
+      }
+
+      .page-wrapper .store-wrpper .other-info span {
+        margin: 0 0.08rem;
+        height: 0.19rem;
+        font-size: 0.18rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+        color: #909090;
+      }
+
+      .page-wrapper .registered-wrapper {
+        width: 100%;
+        margin-top: 0.4rem;
+      }
+
+      .page-wrapper .registered-wrapper .registered-header {
+        display: flex;
+        align-items: center;
+        font-size: 0.3rem;
+        font-family: PingFang SC;
+        font-weight: bold;
+        color: #ffffff;
+      }
+
+      .page-wrapper .registered-wrapper .registered-header img {
+        width: 0.44rem;
+        margin-right: 0.17rem;
+      }
+
+      .page-wrapper .registered-wrapper .breakline {
+        margin: 0.22rem 0 0.37rem 0;
+        width: 100%;
+        height: 0.01rem;
+        background: #ffffff;
+        opacity: 0.1;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper input {
+        padding: 0.28rem 0.26rem;
+        background: rgba(255, 255, 255, 0.3);
+        width: 100%;
+        height: 0.8rem;
+        border-radius: 0.05rem;
+        outline: none;
+        border: none;
+        color: #ffffff;
+      }
+
+      .page-wrapper
+        .registered-wrapper
+        .input-wrapper
+        input::-webkit-input-placeholder {
+        color: #ffffff;
+        font-size: 0.24rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper input::-moz-placeholder {
+        /* Mozilla Firefox 19+ */
+        color: #ffffff;
+        font-size: 0.24rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper input:-moz-placeholder {
+        /* Mozilla Firefox 4 to 18 */
+        color: #ffffff;
+        font-size: 0.24rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+      }
+
+      .page-wrapper
+        .registered-wrapper
+        .input-wrapper
+        input:-ms-input-placeholder {
+        /* Internet Explorer 10-11 */
+        color: #ffffff;
+        font-size: 0.24rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper input:focus {
+        border: none;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper .input-item {
+        display: flex;
+        margin-bottom: 0.4rem;
+        align-items: center;
+      }
+
+      .page-wrapper .registered-wrapper .input-wrapper .input-item .code-btn {
+        justify-content: center;
+        display: flex;
+        margin-left: 0.14rem;
+        align-items: center;
+        width: 1.71rem;
+        color: #ffffff;
+        height: 0.8rem;
+        background: rgba(255, 255, 255, 0.3);
+        font-size: 0.24rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+        border-radius: 0.05rem;
+      }
+      .page-wrapper .registered-wrapper .registered-btn {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        color: #ffffff;
+        height: 0.8rem;
+        background: rgba(255, 255, 255, 0.3);
+        font-size: 0.24rem;
+        font-family: PingFang SC;
+        font-weight: 400;
+        border-radius: 0.05rem;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="app" class="page-wrapper">
+      <div class="header">萌果视频</div>
+      <div class="main">
+        <div class="main-left">
+          <!-- <img ref="imgDom" :src="infoData.imgUrl" alt=""> -->
+          <img
+            crossorigin=""
+            id="imgDom"
+            ref="imgDom"
+            :src="infoData.imgUrl"
+            alt=""
+          />
+        </div>
+        <div class="main-right">
+          <div class="title">{{infoData.name}}</div>
+          <div class="words">免费下载萌果视频 尽享海量片库</div>
+          <div class="director">导演: {{infoData.director}}</div>
+          <div class="actor">主演: {{infoData.actor}}</div>
+          <div class="download-wrapper">
+            <div
+              class="download-btn android"
+              @click="getDownloadUrlHandler('android')"
+            >
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAkCAYAAADo6zjiAAACQ0lEQVRYR+3WzasPYRQH8M9dSokVkZcbopRYeN+w8y7yB7AkxMIaa4ncYskfIPKeFRt5LRJFlLeIFVnYeencZmru3JnfPD8ztxRnM81zzvl+v3OeM89zBqTZIdzFjbRwa7EAx5riB5oCCv4r2JgYfw7bU2L7EbAHEX8fe7EI0zOS93iMISzFD5zqWsAOxFbMagB+gyM426WA49ifAliIOYEDTTkpW3AV65uAavzXsKFXbpOAKPnhDCBKuhMfMLUG9COm4Qxiy8IiP7ak0noJmIc7mJRlxtccxUVMqMH7hi04WKjaF6zAi6qcXgKii3f9YenLaaexu18BT7PDpAsND7GkXwHfMa4LdgTW+CYB0Txh0WRhK/ELPxueKTGB8S7DHcGT90Cxa/NuD+AuLbhG8cRinGyvS0wT8bVLdszE2xLmYAhYjZtlR4WotnpW4XYJZE2dgLl42ZaxlL88u9KLy7UC5uN5xwLiN3yQWoEYJp51LGAxHqUKWIgnHQuowqzdgiq1bfVUVbVWQNV+tRVQ1Ve1Aqo6tq2Aqj+rVkDVP9tWwGDF2TIsYDZeldDjvM7vhLbEeX7MEDEvFG1Ofhecx9bMcwHbsguoK/LACa5RPMWBZFnGdi97jsVlFNAjeHpNRGMlYERV/+qRbEY2BcdtGZY/8y+4VWqQOn/ExRyQDyTJFSg3YHlLiuN2cXzP85pG/uG4pKCapvwv4N+rwCVsKnTmFHzO3ifjU8F3GZtTjtF+mjDwTmId9uF6iSDWwx/r4U+y34E1iqiTeTSzAAAAAElFTkSuQmCC"
+                alt=""
+              />
+              <div>安卓下载</div>
+            </div>
+            <div class="download-btn ios" @click="getDownloadUrlHandler('ios')">
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB0AAAAjCAYAAABo4wHSAAACJUlEQVRYR73XS6jNURTH8c8dMDKSPCcmkokMKF3CgLzleYuZgSIUA2NMDBQGHmEgIwklrxgoxAQzopDIM3NSRlq3/7792/c453/Ovduu0xn8117fvdbee63f7jN6YxrWYxsWtHPbN0rMI9iLcXiLmaWhF7C9BrmMrSWhB3A0AxzC4ZLQZ5hXA7zE7E5bNpI9XY57GWA+npaEHkSkMo2OaU2GI4n0CrbgDXbgcacIO0FXYCmWYQZ+4BUuVb+YvwS/8Lr6n1jd0c3VPf2Cr7iL8/jeDpqnLQ8gDkvAYz8/or8qChsw4R/RfsM+XI3veXrjw4mmaerBbiDAdega3OrBUTdTItKBOvQm1nbjoUvbQWA9vaWjvFHt++A6U6Qlo/yDRfWikaBxtKd2ma6m5sOKRkCn40NTDz3Y7cS5+ryArsKdHpw1nbIyr9EBbdWemjpsYrcR1/NIowFHIy419uB0Dg0986QUEWexK4dOQdTGUuMn5uB9AqQrEx1gcilq1XeHJEyCRi9cWBAarofua4KW7i4pnlCKJxM0GvALTCocbbg/Vu8yx7H/P0D769C5eF4YGv16Xa4crmFTQXBorvs5NMTWg0LQi+n50UqCdhJmvazpM1YjRN0wYZYcJk3bC6DVnJBBt/OK1MpwtMC7cSavve2iyVMdNToeTY/wsNK9cQ4WVxUtHk9jK4eR0njRncoBTZ4V4yuV/6mu0tusdBbG4B1+t7L7C8MwXyMJM9W8AAAAAElFTkSuQmCC"
+                alt=""
+              />
+              <div>苹果下载</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="store-wrpper">
+        <div class="title">豆瓣评分</div>
+        <div class="store-main">
+          <div class="main-left">
+            <div class="store-number">5.5</div>
+            <div class="store-star">
+              <van-rate
+                :readonly="true"
+                v-model="doubanVal"
+                size="0.16rem"
+                gutter="0.06rem"
+                icon="star"
+                void-icon="star"
+                color="#FE9A04"
+                void-color="#7B6E66"
+              />
+            </div>
+          </div>
+          <div class="main-right">
+            <div class="rate-line">
+              <div class="line-left">
+                <div class="star-line">
+                  <van-rate
+                    :readonly="true"
+                    v-model="starZero"
+                    size="0.12rem"
+                    gutter="0.1rem"
+                    icon="star"
+                    void-icon="star"
+                    color="#FE9A04"
+                    void-color="#7B6E66"
+                  />
+                </div>
+                <div class="star-line">
+                  <van-rate
+                    :readonly="true"
+                    v-model="starZero"
+                    count="4"
+                    size="0.12rem"
+                    gutter="0.1rem"
+                    icon="star"
+                    void-icon="star"
+                    color="#FE9A04"
+                    void-color="#7B6E66"
+                  />
+                </div>
+                <div class="star-line">
+                  <van-rate
+                    :readonly="true"
+                    v-model="starZero"
+                    count="3"
+                    size="0.12rem"
+                    gutter="0.1rem"
+                    icon="star"
+                    void-icon="star"
+                    color="#FE9A04"
+                    void-color="#7B6E66"
+                  />
+                </div>
+                <div class="star-line">
+                  <van-rate
+                    :readonly="true"
+                    v-model="starZero"
+                    count="2"
+                    size="0.12rem"
+                    gutter="0.1rem"
+                    icon="star"
+                    void-icon="star"
+                    color="#FE9A04"
+                    void-color="#7B6E66"
+                  />
+                </div>
+                <div class="star-line">
+                  <van-rate
+                    :readonly="true"
+                    v-model="starZero"
+                    count="1"
+                    size="0.12rem"
+                    gutter="0.1rem"
+                    icon="star"
+                    void-icon="star"
+                    color="#FE9A04"
+                    void-color="#7B6E66"
+                  />
+                </div>
+              </div>
+              <div class="line-right">
+                <div class="line-store" v-for="(item, index) in storeRange">
+                  <van-progress
+                    :percentage="item"
+                    color="#FE9A04"
+                    track-color="#7B6E66"
+                    stroke-width="0.12rem"
+                    :show-pivot="false"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="breakline"></div>
+        <div class="other-info">
+          <span>14.9万人看过</span>
+          <span>8.0万人想看</span>
+        </div>
+      </div>
+      <div class="registered-wrapper">
+        <div class="registered-header">
+          <img
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAsCAYAAAAehFoBAAAExElEQVRYR9VZTWwVVRT+vpnbVjBx519SiKgsEHRDIglsLP6lxghVQxNjUJHOQ/lZlYUGExKJLmDVgvqmFbUxJhilYIyNP2A3kmDCRltZgGKgiX87E8G2M/OZmfd4KfS9N/e+9yJhNu8lc77vfHPm3nPPOUO04NLB9nsQxSsALga0WNkvQOg8wPNIf40/wU0zPzXrjo0SqGi6EmKtB/QIWG7DQ2AyAUY94TgL0bc2mKttnAVryN8IcKuE+xtxeBlD4ntAB9gXj7jwWAvWsL9eMbeBeNDFQa6tcIy+9nNzfCTXNltmFlcc+gcIvmxh2rCJoLf8IN6aR5ArOAlNutYeyCNq0f1xL4i66nHVFZyE5k8AN7dIjC3NX14Q3VLLuKbgJPR/AbjE1ktr7XTOC+I7q3FWFawhf0jiZlcRJHZDOgXFpzIs/ZUgV0rY7c6lYfbFfblpTaF5Q8ArLg7S/Arjbah1MJQOluRj23xdSX3AmwyiV+dquSLCWepKOOoiFsC/XhAtsMEkobkE4AYb24poTz1zU94VgpOi+cY1zxJ6mkH8qY0Ihf5TAj+xsa3YCMe8QvTQnKiX/qYnmMQPnMign70gvtsFk4T+WYB3uWBIPXf5RKxEWEPmZAPH7agXRE+6OE9CcxhAjwsmPcbZF63K9nEW3dDvFviFC0kZvI9BtNMFp9DsFdDvgin50mMM4rFMcBz6AwS3u5PgKwbRoy44heZLAY+4YLKgQoN+EO/IBCehfwag01osO/zDC6LbXJwnofkdwK0umPIuO+sF8VKq2H6vmPzgTlBCkNUTfDW+Rg+kSoaQdx8V+hsEHmpUcHl9rWMQf1aPQ6H/hMCjTfrppULTL2BvM0SZaHELC7PFqpEtthVEvdO0D2BnGuEBNbDhajj/msQkoFItgayOSNunh5sVW36Tg0xCk1b661pB+D9wHL3+BLdoSYxLnAI05ZEXgGSqFG2vM5EWAewk1dls50JosIlNp19Jvg/jf8QXps/YLAe917EUUfyMpOcB3mGDmWvD8qZzTmsUdmE62scdmHZ1mtprAB3oMP0i9rjgCfUyLa4VJZO2QIIvMZhtOkVlwsO2LYLetvZtvOXl4sdM2HQDErf7hdn9tg5s7OJi2zZSg3m2aVfDIFpRLn7M6wR25YAucmF0O5/F33nkLvf1IW7SRfMbgIV1T0pgjx9Er5UiXDRdIo7XB+hdP4idG1Mb8XHoDxN8sZ4thbXpPM6lgD/hBdEaGwGuNklovgOwuhZuXgGfRdmiRSKwhkF0wlVQ3TcXmtUCUsE1r6otUmqd24QKh7kg2siN+KcVojWCG3XJjICo3WbVakKzKNu1+eNktIl9ONeMaA1hiWQO5p1+rNfmpwKsJpXChIgjsfh5e2H2pIvwmWLbKp96nMJ6ECtyNvq8iWbVUZXjxPI0iUNpHYG0njDeBbTPlGqJmfZORMkiZHUEOyX0Alhm+YBVJ5l1hoHXZHJ5+VlqTjBzxq3XYoJZe3KZPk3uQLvZxtHy9WdmNg1truAsezQw0XQRWo7cvEllNQ4rwZWUd718lJn7pNfNZ6+rX086j0uAbgLd9lMjnRUw5gFj6ZzMddlYbTob0nR6BMbL6n66lX+ahZkfbfjq2fwHUWYA3RFZyLIAAAAASUVORK5CYII="
+            alt=""
+          />
+          <span>注册账号</span>
+        </div>
+        <div class="breakline"></div>
+        <div class="input-wrapper">
+          <div class="input-item">
+            <input
+              v-model="user_name"
+              placeholder="请输入手机号"
+              class="phone"
+            />
+          </div>
+          <div class="input-item">
+            <input placeholder="请输入验证码" v-model="code" class="code-input" />
+            <div class="code-btn" @click="getCode">获取验证码</div>
+          </div>
+          <div class="input-item">
+            <input placeholder="请输入密码" v-model="user_pwd" type="password" class="pwd-input" />
+          </div>
+          <div class="registered-btn" @click="registeredHandler">
+            <span>注 册</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    var vConsole = new window.VConsole();
+    const addPrefixSlash = (str) => (str[0] === "/" ? str : `/${str}`);
+    const service = axios.create({
+      timeout: 20000, // request timeout
+    });
+
+    //axios封装post请求
+    function axiosPostRequst(url, data) {
+      let result = service({
+        method: "post",
+        url: url,
+        data: data,
+        transformRequest: [
+          function (data) {
+            let ret = "";
+            for (let i in data) {
+              ret +=
+                encodeURIComponent(i) + "=" + encodeURIComponent(data[i]) + "&";
+            }
+            ret = ret.substr(0, ret.length - 1);
+            return ret;
+          },
+        ],
+        header: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => {
+          return response.data;
+        })
+        .catch((error) => {
+          return "exception=" + error;
+        });
+      return result;
+    }
+
+    // Content-Type
+    //get请求
+    function axiosGetRequst(url, data) {
+      var result = service({
+        method: "get",
+        url: url,
+        data: data,
+        transformRequest: [
+          function (data) {
+            let ret = "";
+            for (let i in data) {
+              ret +=
+                encodeURIComponent(i) + "=" + encodeURIComponent(data[i]) + "&";
+            }
+            ret = ret.substr(0, ret.length - 1);
+            return ret;
+          },
+        ],
+        header: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then(function (resp) {
+          return resp.data;
+        })
+        .catch(function (error) {
+          return error;
+        });
+      return result;
+    }
+    const app = new Vue({
+      el: "#app",
+      data: function () {
+        return {
+          starZero: 0,
+          doubanVal: 3,
+          storeRange: [10, 20, 60, 40, 20],
+          qryId: null,
+          infoData: {
+            name: "",
+            director: "",
+            actor: "",
+            imgUrl: "",
+          },
+          colorMain: null,
+          show: true,
+          user_name: "", // 手机号
+          user_pwd: "", // 密码
+          code: "", // 验证码
+        };
+      },
+      methods: {
+        downloadByIframe(url) {
+          const iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = url ? url : addPrefixSlash(src);
+          document.body.appendChild(iframe);
+        },
+        getQueryVariable(variable) {
+          var query = window.location.search.substring(1);
+          var vars = query.split("&");
+          for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] == variable) {
+              return pair[1];
+            }
+          }
+          return false;
+        },
+        getColorHandler() {
+          const colorThief = new ColorThief();
+          if (this.$refs.imgDom && this.$refs.imgDom.complete) {
+            this.colorMain = colorThief.getColor(this.$refs.imgDom);
+          } else {
+            this.$nextTick(() => {
+              this.$refs.imgDom.addEventListener("load", () => {
+                this.colorMain = colorThief.getColor(this.$refs.imgDom);
+                document.body.style.visibility = `visible`;
+
+                document.body.style.backgroundColor = `rgb(${this.colorMain})`;
+              });
+            });
+          }
+        },
+        getInfoData(id) {
+          let that = this;
+          axiosPostRequst(
+            "http://mgapp.appearoo.top/api.php/provide/vod_detail",
+            {
+              ac: "vod_detail",
+              id,
+            }
+          )
+            .then(function (res) {
+              that.infoData.name = res.name || "";
+              that.infoData.director = res.director || "";
+              that.infoData.actor =
+                res.actor.split(",").splice(0, 5).join(" / ") || "";
+              that.infoData.imgUrl = res.img || "";
+            })
+            .catch(function (err) {
+              console.log(err);
+            });
+        },
+        // 获取验证码
+        getCode() {
+          if (this.user_name === '') {
+            vant.Toast("请输入手机号");
+            return
+          }
+          axiosPostRequst("http://mgapp.appearoo.top/api.php/provide/regcode", {
+            user_name: this.user_name,
+          }).then((res) => {
+            if (res.code === 1) {
+              vant.Toast("已发送验证码，请查收");
+            } else {
+              vant.Toast("验证码发送失败，请稍后重试");
+            }
+          });
+        },
+        registeredHandler() {
+          if (this.user_name === '') {
+            vant.Toast("请输入手机号");
+            return
+          }
+          if (this.code === '') {
+            vant.Toast("请输入验证码");
+            return
+          }
+          if (this.user_pwd === '') {
+            vant.Toast("请输入密码");
+            return
+          }
+          
+          axiosPostRequst("http://mgapp.appearoo.top/api.php/provide/reg", {
+            user_name: this.user_name,
+            user_pwd: md5(this.user_pwd),
+            code: this.code,
+          }).then((res) => {
+            vant.Toast(res.msg);
+          });
+        },
+        getDownloadUrlHandler(sys) {
+          axiosPostRequst("http://mgapp.appearoo.top/api.php/provide/upgrade", {
+            sys,
+          }).then((res) => {
+            const down_url = res.data.down_url
+            this.downloadByIframe(down_url)
+            vant.Toast("提示内容:", res);
+          });
+        },
+      },
+      created() {
+        this.qryId = this.getQueryVariable("id");
+        this.getInfoData(this.qryId)
+        // this.getInfoData("42589");
+      },
+      mounted() {
+        document.body.style.visibility = `hidden`;
+        this.getColorHandler();
+      },
+    });
+  </script>
+</html>
